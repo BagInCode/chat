@@ -1,9 +1,8 @@
 <?php
 
-//use PHPMailer\PHPMailer\PHPMailer;
-//use PHPMailer\PHPMailer\SMTP;
-//use PHPMailer\PHPMailer\Exception;
-
+require("D:/Chat/PHPMailer/src/PHPMailer.php");
+require("D:/Chat/PHPMailer/src/SMTP.php");
+require("D:/Chat/PHPMailer/src/Exception.php");
 //require 'vendor/autoload.php';
 
 $error = '';
@@ -39,7 +38,25 @@ if(isset($_POST["register"]))
     {
         if($user_object->save_data())
         {
-            $success = "Registration completed";
+            $to = '<'.$user_object->getUserEmail().'>';
+            $subject = 'Registration verification for Chat App Demo';
+            $message = '
+            <p>Thank you for registration for Chat App Demo.</p>
+                <p>This is a verification email, please click the link to verify your email adress.</p>
+                <p><a href="http://localhost:81/tutorial/chat_application/verify.php?code='.$user_object->getUserVerificationCode().'">Click to verify</a></p>
+                <p>Thank you...</p>
+                ';
+            $headers = "Content-type: text/html; charset=windows-1251 \r\n";
+            $headers .= "From: От кого письмо <serg1331@inbox.ru>\r\n";
+
+            if(!mail($to, $subject, $message, $headers))
+            {
+                $error = '<p>Can`t send verefiction mail</p>
+                            <p>But follow <a href="http://localhost:63342/Chat/verify.php?code='.$user_object->getUserVerificationCode().'">link</a> to verify email</p>';
+            }else
+            {
+                $success_message = 'Verification Email sent to '.$user_object->getUserEmail().', so before login verify your email';
+            }
         }else
         {
             $error = "Sth went wrong";

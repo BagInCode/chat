@@ -10,7 +10,7 @@ class ChatUser
     private $user_profile;
     private $user_status;
     private $user_created_on;
-    private $user_verefication_code;
+    private $user_verification_code;
     private $user_login_status;
     public $connect;
 
@@ -51,9 +51,9 @@ class ChatUser
     {
         $this->user_created_on = $user_created_on;
     }
-    function setUserVerificationCode($user_verefication_code)
+    function setUserVerificationCode($user_verification_code)
     {
-        $this->user_verefication_code = $user_verefication_code;
+        $this->user_verification_code = $user_verification_code;
     }
     function setUserLoginStatus($user_login_status)
     {
@@ -150,7 +150,49 @@ class ChatUser
         $statement->bindParam(':user_profile', $this->user_profile);
         $statement->bindParam(':user_status', $this->user_status);
         $statement->bindParam(':user_created_on', $this->user_created_on);
-        $statement->bindParam(':user_verification_code', $this->user_verefication_code);
+        $statement->bindParam(':user_verification_code', $this->user_verification_code);
+
+        if($statement->execute())
+        {
+            return true;
+        }else
+        {
+            return false;
+        }
+    }
+
+    function is_valid_email_verification_code()
+    {
+        $query = "
+        SELECT * FROM chat_user_table
+        WHERE user_verification_code = :user_verification_code
+        ";
+
+        $statment = $this->connect->prepare($query);
+        $statment->bindParam(':user_verification_code', $this->user_verification_code);
+        $statment->execute();
+
+        if($statment->rowCount() > 0)
+        {
+            return true;
+        }else
+        {
+            return false;
+        }
+    }
+
+    function enable_user_account()
+    {
+        $query = "
+            UPDATE chat_user_table
+            SET user_status = :user_status
+            WHERE user_verification_code = :user_verification_code
+            ";
+
+        $statement = $this->connect->prepare($query);
+
+        $statement->bindParam(':user_status', $this->user_status);
+        $statement->bindParam(':user_verification_code', $this->user_verification_code);
 
         if($statement->execute())
         {
