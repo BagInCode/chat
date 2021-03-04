@@ -30,4 +30,3 @@ if(isset($_GET['code']))
         $error = 'Sth went wrong';
     }
 }
-?>

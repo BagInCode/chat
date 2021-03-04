@@ -1,10 +1,4 @@
 <?php
-
-require("D:/Chat/PHPMailer/src/PHPMailer.php");
-require("D:/Chat/PHPMailer/src/SMTP.php");
-require("D:/Chat/PHPMailer/src/Exception.php");
-//require 'vendor/autoload.php';
-
 $error = '';
 
 $success_message = '';
@@ -76,7 +70,7 @@ if(isset($_POST["register"]))
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>Rgister | PHP Chat App with WebSockets and MySQL</title>
+    <title>Register | PHP Chat App with WebSockets and MySQL</title>
 
     <!-- Bootstrap core CSS
     <link href="vendor-front/bootstrap/bootstrap.min.css" rel="stylesheet">

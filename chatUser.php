@@ -135,8 +135,26 @@ class ChatUser
         return $user_data;
     }
 
+    function hash_password($user_password)
+    {
+        $key = 257;
+        $step = 1;
+        $result = 0;
+        $mod = 1000000000+7;
+
+        for($i = 0; $i < strlen($user_password); $i++)
+        {
+            $result = ($result + $step * ord($user_password[$i])) % $mod;
+            $step = ($step * $key) % $mod;
+        }
+
+        return $result;
+    }
+
     function save_data()
     {
+        $this->user_password = $this->hash_password($this->user_password);
+
         $query = "
         INSERT INTO chat_user_table (user_name, user_email, user_password, user_profile, user_status, user_created_on, user_verification_code)
         VALUES (:user_name, :user_email, :user_password, :user_profile, :user_status, :user_created_on, :user_verification_code)
@@ -185,14 +203,39 @@ class ChatUser
     {
         $query = "
             UPDATE chat_user_table
-            SET user_status = :user_status
+            SET user_status = :user_status, user_login_status = :user_login_status
             WHERE user_verification_code = :user_verification_code
             ";
+
+        $Logout = "Logout";
 
         $statement = $this->connect->prepare($query);
 
         $statement->bindParam(':user_status', $this->user_status);
         $statement->bindParam(':user_verification_code', $this->user_verification_code);
+        $statement->bindParam(':user_login_status', $Logout);
+
+        if($statement->execute())
+        {
+            return true;
+        }else
+        {
+            return false;
+        }
+    }
+
+    function update_user_login_data()
+    {
+        $query = "
+        UPDATE chat_user_table
+        SET user_login_status = :user_login_status
+        WHERE user_id = :user_id
+        ";
+
+        $statement = $this->connect->prepare($query);
+
+        $statement->bindParam(':user_login_status', $this->user_login_status);
+        $statement->bindParam(':user_id', $this->user_id);
 
         if($statement->execute())
         {

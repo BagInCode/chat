@@ -1,5 +1,18 @@
 <?php
 
+$stringValue = "some string";
+
+$key = 257;
+$step = 0;
+
+for($i = 0; $i < strlen($stringValue); $i++)
+{
+    echo ord($stringValue[$i]).'<br>';
+}
+
+unset($_SESSION['user_data']);
+
+/*
 $connect = new PDO("mysql:host=localhost; dbname=chat", "root", "rootG_20marder2");
 
 if(! $connect ) {
@@ -28,4 +41,5 @@ if($statment->execute())
 {
     die('Could not create Table');
 }
+*/
 ?>
