@@ -298,6 +298,8 @@ class ChatUser
         WHERE user_id = :user_id
         ";
 
+        $this->user_password = $this->hash_password($this->user_password);
+
         $statement = $this->connect->prepare($query);
 
         $statement->bindParam(':user_name', $this->user_name);

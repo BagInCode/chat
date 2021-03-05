@@ -30,13 +30,6 @@ if(isset($_POST['edit']))
 
     if($_FILES['user_profile']['name'] != '')
     {
-        /*foreach ($_FILES['user_profile'] as $key => $value)
-        {
-            $message .= $key." => ".$value."<br/>";
-        }
-
-        die($message);*/
-
         $user_profile = $user_object->upload_image($_FILES['user_profile']);
         $_SESSION['user_data'][$user_id]['profile'] = $user_profile;
     }
