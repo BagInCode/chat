@@ -104,6 +104,15 @@ if(!isset($_SESSION['user_data']))
 <script>
     $(document).ready(function()
     {
+        var conn = new WebSocket('ws://localhost:8080');
+        conn.onopen = function(e) {
+            console.log("Connection established!");
+        };
+
+        conn.onmessage = function(e) {
+            console.log(e.data);
+        };
+
         $('#logout').click(function(){
 
             user_id = $('#login_user_id').val();
