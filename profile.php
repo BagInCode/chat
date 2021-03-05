@@ -43,6 +43,9 @@ if(isset($_POST['edit']))
     if($user_object->update_data())
     {
         $message = '<div class="alert alert-success">Profile Details Updated</div>';
+        $user_data['user_name'] = $user_object->getUserName();
+        $user_data['user_email'] = $user_object->getUserEmail();
+        $user_data['user_profile'] = $user_object->getUserProfile();
     }
 }
 
