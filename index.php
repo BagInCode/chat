@@ -1,8 +1,9 @@
 <?php
 
-session_start();
 
 $error = '';
+
+session_start();
 
 if(isset($_SESSION['user_data']))
 {
@@ -66,19 +67,18 @@ if(isset($_POST['login']))
 
     <title>Login | PHP Chat App with WebSockets and MySQL</title>
 
-    <!-- Bootstrap core CSS
-    <link href="vendor-front/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap core CSS -->
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <!--
     <link href="vendor-front/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     -->
     <link rel="stylesheet" type="text/css" href="parsley/src/parsley.css">
 
+    <!-- Bootstrap core JavaScript-->
+    <script src="js/jquery-3.6.0.min.js"></script>
+    <script src="js/bootstrap.bundle.min.js"></script>
 
-
-    <!-- Bootstrap core JavaScript
-    <script src="vendor-front/jquery/jquery.min.js"></script>
-    <script src="vendor-front/bootstrap/js/bootstrap.bundle.min.js"></script>
-    -->
-    <script type="text/javascript" src="parsley/dist/parsley.min.js"></script>
+    <script src="parsley/dist/parsley.min.js"></script>
 
 
 </head>
@@ -135,9 +135,6 @@ if(isset($_POST['login']))
         </div>
     </div>
 </div>
-</body>
-
-</html>
 
 <script>
 
@@ -147,3 +144,6 @@ if(isset($_POST['login']))
     });
 
 </script>
+</body>
+
+</html>

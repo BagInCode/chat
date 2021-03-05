@@ -2,6 +2,11 @@
 
 session_start();
 
+if(!isset($_SESSION['user_data']))
+{
+    header('location:index.php');
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -14,19 +19,20 @@ session_start();
 
     <title>Chatroom | PHP Chat App with WebSockets and MySQL</title>
 
-    <!-- Bootstrap core CSS
-    <link href="vendor-front/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap core CSS -->
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <!--
     <link href="vendor-front/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     -->
     <link rel="stylesheet" type="text/css" href="parsley/src/parsley.css">
 
 
 
-    <!-- Bootstrap core JavaScript
-    <script src="vendor-front/jquery/jquery.min.js"></script>
-    <script src="vendor-front/bootstrap/js/bootstrap.bundle.min.js"></script>
-    -->
-    <script type="text/javascript" src="parsley/dist/parsley.min.js"></script>
+    <!-- Bootstrap core JavaScript-->
+    <script src="js/jquery-3.6.0.min.js"></script>
+    <script src="js/bootstrap.bundle.min.js"></script>
+
+    <script src="parsley/dist/parsley.min.js"></script>
 
     <style type="text/css">
         html,
@@ -63,7 +69,6 @@ session_start();
     </style>
 </head>
 <body>
-
     <div class="container">
         <br/>
         <h1 class="text-center">PHP Chat App with WebSockets and MySQL</h1>
@@ -73,17 +78,21 @@ session_start();
             </div>
             <div class="col-lg-4">
                 <?php
-                if(!isset($_SESSION['user_data']))
-                {
-                    die('Sth went wrong');
-                }
+
+                $login_user_id = '';
 
                 foreach($_SESSION['user_data'] as $key => $value)
-                {?>
+                {
+                    $login_user_id = $value['id'];
+                    ?>
+                    <input type="hidden" name="login_user_id" id="login_user_id" value="<?php echo $login_user_id; ?>"/>
+                    <p style="display: none" id="testText">testText</p>
                     <div class="mt-3 mb-3 text-center">
                         <img src="<?php echo $value['profile'];?>" width="150" class="img-fluid rounded-circle img-thumbnail"/>
                         <h3 class="mt-2"><?php echo $value['name'];?></h3>
                         <a href="profile.php" class="btn btn-secondary mt-2 mb-2">Edit</a>
+
+                        <input type="button" class="btn btn-primary mt-2 mb-2" name="logout" id="logout" value="Logout"/>
                     </div>
                 <?php
                 }
@@ -91,13 +100,32 @@ session_start();
             </div>
         </div>
     </div>
-</body>
 
-</html>
-
-<script type="text/javascript">
+<script>
     $(document).ready(function()
     {
-       $('#register_form').parsley();
+        $('#logout').click(function(){
+
+            user_id = $('#login_user_id').val();
+
+            $.ajax({
+                url:"action.php",
+                method:"POST",
+                data:{user_id:user_id, action:'leave'},
+                success:function(data)
+                {
+                    var response = JSON.parse(data);
+
+                    if(response.status == 1)
+                    {
+                        location = 'index.php';
+                        conn.close();
+                    }
+                }
+            })
+
+        });
     });
 </script>
+</body>
+</html>

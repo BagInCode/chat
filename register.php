@@ -5,8 +5,6 @@ $success_message = '';
 
 if(isset($_POST["register"]))
 {
-    session_start();
-
     if(isset($_SESSION['user_data']))
     {
         header('location:chatroom.php');
@@ -72,19 +70,18 @@ if(isset($_POST["register"]))
 
     <title>Register | PHP Chat App with WebSockets and MySQL</title>
 
-    <!-- Bootstrap core CSS
-    <link href="vendor-front/bootstrap/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap core CSS -->
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <!--
     <link href="vendor-front/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     -->
     <link rel="stylesheet" type="text/css" href="parsley/src/parsley.css">
 
+    <!-- Bootstrap core JavaScript-->
+    <script src="js/jquery-3.6.0.min.js"></script>
+    <script src="js/bootstrap.bundle.min.js"></script>
 
-
-    <!-- Bootstrap core JavaScript
-    <script src="vendor-front/jquery/jquery.min.js"></script>
-    <script src="vendor-front/bootstrap/js/bootstrap.bundle.min.js"></script>
-    -->
-    <script type="text/javascript" src="parsley/dist/parsley.min.js"></script>
+    <script src="parsley/dist/parsley.min.js"></script>
 
 
 </head>
@@ -117,6 +114,8 @@ if(isset($_POST["register"]))
                         '.$success_message.'
                         </div>
                         ';
+
+                        header('location:index.php');
                     }
                 ?>
                 <div class="card">
@@ -151,9 +150,6 @@ if(isset($_POST["register"]))
             </div>
         </div>
     </div>
-</body>
-
-</html>
 
 <script>
     $(document).ready(function()
@@ -161,3 +157,7 @@ if(isset($_POST["register"]))
        $('#register_form').parsley();
     });
 </script>
+
+</body>
+
+</html>
