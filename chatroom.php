@@ -62,7 +62,7 @@ if(!isset($_SESSION['user_data']))
             overflow-y: auto;
         }
         #message_area{
-            height: 650px;
+            height: 500px;
             overflow-y: auto;
             background-color: #e6e6e6;
         }
@@ -86,7 +86,7 @@ if(!isset($_SESSION['user_data']))
 
                 <form method="post" id="chat_form">
                     <div class="input-group mb-3">
-                        <textarea class="form-control" id="chat_message" name="chat_message" placeholder="Type Message Here" data-parsley-maxlength="512" data-parsley-pattern="/^[a-zA-Z0-9\s]+$/" required></textarea>
+                        <textarea class="form-control" id="chat_message" name="chat_message" placeholder="Type Message Here" data-parsley-maxlength="512" data-parsley-pattern="/^[\w\s\.!?,:;-]+$/" required></textarea>
                         <div class="input-group-append">
                             <button type="submit" name="send" id="send" class="btn btn-primary">Send</button>
                         </div>
@@ -134,11 +134,32 @@ if(!isset($_SESSION['user_data']))
 
             var data = JSON.parse(e.data);
 
-            var row_class = 'row justify-content-start';
+            var row_class = '';
 
-            var background_class = 'text-dark alert-light';
+            var background_class = '';
 
-            var html_data = "<div class='"+row_class+"'><div class='col-sm-10'><div class='shadow-sm alert "+background_class+"'>"+data.msg+"</div></div></div>";
+            if(data.from == 'Me')
+            {
+                row_class = "row justify-content-start";
+                background_class = 'text-dark alert-light';
+            }else
+            {
+                row_class = 'row justify-content-end';
+                background_class = 'alert-success';
+            }
+
+            var html_data = "<div class='"+row_class+"'>"+
+                                "<div class='col-sm-10'>"+
+                                    "<div class='shadow-sm alert "+background_class+"'>"+
+                                        "<b>"+data.from+" - </b>"+data.msg+"<br/>"+
+                                        "<div class='text-right'>"+
+                                            "<small>"+
+                                                "<i>"+data.dt+"</i>"+
+                                            "</small>"+
+                                        "</div>"+
+                                    "</div>"+
+                                "</div>"+
+                            "</div>";
 
             $('#message_area').append(html_data);
             $('#chat_message').val('');
