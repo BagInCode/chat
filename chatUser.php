@@ -316,4 +316,42 @@ class ChatUser
             return false;
         }
     }
+
+    function get_users_chats_by_id()
+    {
+        $query = "SELECT DISTINCT * FROM chat_list_table
+        WHERE EXISTS (SELECT * FROM chat_to_user_table
+                     WHERE chat_to_user_table.chat_id = chat_list_table.chat_id
+                       AND chat_to_user_table.user_id = :user_id)";
+
+        $statement = $this->connect->prepare($query);
+
+        $statement->bindParam(':user_id', $this->user_id);
+
+        $result = array();
+
+        try
+        {
+            if($statement->execute())
+            {
+                $result[0] = $statement->rowCount();
+
+                for($i = 0; $i < $statement->rowCount(); $i++)
+                {
+                    $data = $statement->fetch(PDO::FETCH_ASSOC);
+
+                    $result[$i+1][1] = $data['name'];
+                    $result[$i+1][0] = $data['chat_id'];
+                }
+            }else
+            {
+                $data = array();
+            }
+        }catch(Exception $error)
+        {
+            echo $error->getMessage();
+        }
+
+        return $result;
+    }
 }

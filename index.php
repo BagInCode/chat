@@ -37,7 +37,7 @@ if(isset($_POST['login']))
                             'profile' => $user_data['user_profile']
                     ];
 
-                    header('location:chatroom.php');
+                    header('location:chatlist.php');
                 }
             }else
             {

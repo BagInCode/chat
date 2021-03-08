@@ -7,6 +7,21 @@ if(!isset($_SESSION['user_data']))
     header('location:index.php');
 }
 
+if(!isset($_GET['chat_id']))
+{
+    header('location:chatlist.php');
+}
+
+$chat_id = $_GET['chat_id'];
+unset($_GET['chat_id']);
+
+require ("database/ChatTable.php");
+
+$chatList_object = new ChatTable;
+$chatList_object->setChatId($chat_id);
+
+$chat_name = $chatList_object->get_name_by_id();
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -77,7 +92,10 @@ if(!isset($_SESSION['user_data']))
             <div class="col-lg-8">
                 <div class="card">
                     <div class="card-header">
-                        <h3>Chat Room</h3>
+                        <a href="chatlist.php" class="btn btn-primary mt-2 mb-2">Back</a>
+                        <?php
+                        echo '<h3 class="text-right" style="display: inline-block">'.$chat_name['name'].'</h3>';
+                        ?>
                     </div>
                     <div class="card-body" id="message_area">
 
