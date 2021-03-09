@@ -354,4 +354,41 @@ class ChatUser
 
         return $result;
     }
+
+    function getIdByEmail()
+    {
+        $query = "SELECT user_id 
+                  FROM chat_user_table
+                  WHERE chat_user_table.user_email=:user_email";
+
+        $user_email = $this->getUserEmail();
+
+        $statement=$this->connect->prepare($query);
+        $statement->bindParam(':user_email', $user_email);
+
+        $data = array();
+
+        try
+        {
+            if($statement->execute())
+            {
+                if($statement->rowCount() > 0)
+                {
+                    $data = $statement->fetch(PDO::FETCH_ASSOC);
+                    $data = $data['user_id'];
+                }else
+                {
+                    return false;
+                }
+            }else
+            {
+                return false;
+            }
+        }catch(Exception $error)
+        {
+            $error->getMessage();
+        }
+
+        return $data;
+    }
 }

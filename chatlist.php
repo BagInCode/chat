@@ -132,4 +132,28 @@ require_once ("database/chatUser.php");
         </div>
     </div>
 </body>
+
+<script>
+    $('#logout').click(function(){
+
+        user_id = $('#login_user_id').val();
+
+        $.ajax({
+            url:"action.php",
+            method:"POST",
+            data:{user_id:user_id, action:'leave'},
+            success:function(data)
+            {
+                var response = JSON.parse(data);
+
+                if(response.status == 1)
+                {
+                    location = 'index.php';
+                    conn.close();
+                }
+            }
+        })
+
+    });
+</script>
 </html>

@@ -59,4 +59,35 @@ class ChatTable
 
         return $data;
     }
+    function exist_chat()
+    {
+        $query = "SELECT * 
+                  FROM chat_list_table 
+                  WHERE chat_list_table.chat_id=:chat_id;";
+
+        $chat_id = $this->getChatId();
+
+        $statement = $this->connect->prepare($query);
+        $statement->bindParam(':chat_id', $chat_id);
+
+        try
+        {
+            if($statement->execute())
+            {
+                if($statement->rowCount() > 0)
+                {
+                    return true;
+                }else
+                {
+                    return false;
+                }
+            }else
+            {
+                return false;
+            }
+        }catch(Exception $error)
+        {
+            $error->getMessage();
+        }
+    }
 }

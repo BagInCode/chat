@@ -49,7 +49,7 @@ if(isset($_POST['login']))
         }
     }else
     {
-        $error = "Wron Email Address";
+        $error = "Wrong Email Address";
     }
 }
 

@@ -16,6 +16,14 @@ $chat_id = $_GET['chat_id'];
 unset($_GET['chat_id']);
 
 require ("database/ChatTable.php");
+$chat_table_object = new ChatTable;
+
+$chat_table_object->setChatId($chat_id);
+
+if(!$chat_table_object->exist_chat())
+{
+    header('location:chatlist.php');
+}
 
 $chatList_object = new ChatTable;
 $chatList_object->setChatId($chat_id);
@@ -94,7 +102,8 @@ $chat_name = $chatList_object->get_name_by_id();
                     <div class="card-header">
                         <a href="chatlist.php" class="btn btn-primary mt-2 mb-2">Back</a>
                         <?php
-                        echo '<h3 class="text-right" style="display: inline-block">'.$chat_name['name'].'</h3>';
+                        echo '<a href="addperson.php?chat_id='.$chat_id.'" class="btn btn-primary mt-2 mb-2">Add Person</a>';
+                        echo '<h3 class="text-right" style="display: inline-block"> '.$chat_name['name'].'</h3>';
                         ?>
                     </div>
                     <div class="card-body" id="message_area">
