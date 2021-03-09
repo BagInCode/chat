@@ -80,7 +80,8 @@ require_once ("database/chatUser.php");
             <div class="col-lg-8">
                 <div class="card">
                     <div class="card-header">
-                        <h3>Chat Room List</h3>
+                        <a href="addchat.php" class="btn btn-primary mt-2 mb-2">Create New Chat</a>
+                        <h3 style="display: inline-block">Chat Room List</h3>
                     </div>
                     <div class="card-body" id="chat_list_area">
                         <?php
