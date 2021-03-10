@@ -20,7 +20,7 @@ $chat_table_object = new ChatTable;
 
 $chat_table_object->setChatId($chat_id);
 
-if(!$chat_table_object->exist_chat())
+if(!$chat_table_object->existChat())
 {
     header('location:chatlist.php');
 }

@@ -319,9 +319,9 @@ class ChatUser
 
     function get_users_chats_by_id()
     {
-        $query = "SELECT DISTINCT * FROM chat_list_table
+        $query = "SELECT DISTINCT * FROM chat_table
         WHERE EXISTS (SELECT * FROM chat_to_user_table
-                     WHERE chat_to_user_table.chat_id = chat_list_table.chat_id
+                     WHERE chat_to_user_table.chat_id = chat_table.chat_id
                        AND chat_to_user_table.user_id = :user_id)";
 
         $statement = $this->connect->prepare($query);
@@ -340,7 +340,7 @@ class ChatUser
                 {
                     $data = $statement->fetch(PDO::FETCH_ASSOC);
 
-                    $result[$i+1][1] = $data['name'];
+                    $result[$i+1][1] = $data['chat_name'];
                     $result[$i+1][0] = $data['chat_id'];
                 }
             }else

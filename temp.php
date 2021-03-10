@@ -13,7 +13,7 @@ for($i = 0; $i < strlen($stringValue); $i++)
 unset($_SESSION['user_data']);
 */
 
-$connect = new PDO("mysql:host=localhost; dbname=chat", "root", "rootG_20marder2");
+$connect = new PDO("mysql:host=localhost; dbname=chat", "root", "root_password");
 
 if(! $connect ) {
     die('Could not connect:');
@@ -24,8 +24,8 @@ $query = "";
 
 /*
 $query = 'CREATE TABLE chat_table(
-    chat_id int(11) PRIMARY KEY AUTO_INCREMENT,
-    chat_name varchar(250) NOT NULL,
+    user_id int(11) PRIMARY KEY AUTO_INCREMENT,
+    user_name varchar(250) NOT NULL,
     user_email varchar(250) NOT NULL,
     user_password varchar(100) NOT NULL,
     user_profile varchar(100) NOT NULL,

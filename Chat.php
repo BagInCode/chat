@@ -4,6 +4,7 @@ use Ratchet\MessageComponentInterface;
 use Ratchet\ConnectionInterface;
 
 require dirname(__DIR__) . "/database/chatUser.php";
+require dirname(__DIR__) . "/database/_Message.php";
 
 class Chat implements MessageComponentInterface {
     protected $clients;
@@ -20,6 +21,7 @@ class Chat implements MessageComponentInterface {
     }
 
     public function onMessage(ConnectionInterface $from, $msg) {
+
         $numRecv = count($this->clients) - 1;
         echo sprintf('Connection %d sending message "%s" to %d other connection%s' . "\n"
             , $from->resourceId, $msg, $numRecv, $numRecv == 1 ? '' : 's');
@@ -27,6 +29,14 @@ class Chat implements MessageComponentInterface {
         $data = json_decode($msg, true);
 
         $user_object = new \ChatUser();
+        $message_object = new \_Message();
+
+        $message_object->setUserId($data['userId']);
+        $message_object->setChatId($data['chatId']);
+        $message_object->setText($data['msg']);
+        $message_object->setCreatedOn(date("Y-m-d h:i:s"));
+
+        $message_object->saveMessage();
 
         $user_object->setUserId($data['userId']);
         $user_data = $user_object->get_user_data_by_id();

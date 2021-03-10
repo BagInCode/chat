@@ -38,8 +38,8 @@ class ChatTable
     {
         $chat_id = $this->getChatId();
 
-        $query="SELECT name FROM chat_list_table
-                WHERE chat_list_table.chat_id=:chat_id";
+        $query="SELECT chat_name FROM chat_table
+                WHERE chat_table.chat_id=:chat_id";
 
         $statement = $this->connect->prepare($query);
         $statement->bindParam(':chat_id', $chat_id);
@@ -61,7 +61,7 @@ class ChatTable
     }
     function getIdByName()
     {
-        $query = "SELECT chat_id FROM chat_list_table WHERE chat_list_table.name=:chat_name";
+        $query = "SELECT MAX(chat_id) FROM chat_table WHERE chat_table.chat_name=:chat_name";
 
         $chat_name = $this->getChatName();
 
@@ -76,7 +76,7 @@ class ChatTable
             {
                 $data = $statement->fetch(PDO::FETCH_ASSOC);
 
-                $data = $data['chat_id'];
+                $data = $data['MAX(chat_id)'];
             }else
             {
                 return false;
@@ -91,8 +91,8 @@ class ChatTable
     function existChat()
     {
         $query = "SELECT * 
-                  FROM chat_list_table 
-                  WHERE chat_list_table.chat_id=:chat_id;";
+                  FROM chat_table 
+                  WHERE chat_table.chat_id=:chat_id;";
 
         $chat_id = $this->getChatId();
 
@@ -122,7 +122,7 @@ class ChatTable
     function createChat()
     {
         $query = "
-        INSERT INTO chat_list_table (name)
+        INSERT INTO chat_table (chat_name)
         VALUES (:chat_name)";
 
         $chat_name = $this->getChatName();

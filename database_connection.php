@@ -4,7 +4,7 @@ class Database_connection
 {
     function connect()
     {
-        $connect = new PDO("mysql:host=localhost; dbname=chat", "root", "rootG_20marder2");
+        $connect = new PDO("mysql:host=127.0.0.1; dbname=chat", "user", "user_password");
 
         return $connect;
     }

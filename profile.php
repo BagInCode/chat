@@ -96,7 +96,7 @@ if(isset($_POST['edit']))
                 <div class="row">
                     <div class="col-md-5">Profile</div>
                     <div class="col-md-5 text-right">
-                        <a href="chatroom.php" class="btn btn-warning btn-sm">Go to Chat</a>
+                        <a href="chatlist.php" class="btn btn-warning btn-sm">Go to Chat List</a>
                     </div>
                 </div>
             </div>

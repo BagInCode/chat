@@ -9,6 +9,21 @@ if(!isset($_SESSION['user_data']))
 
 require_once ("database/chatUser.php");
 
+$user_object = new ChatUser();
+
+$user_id = '';
+
+foreach($_SESSION['user_data'] as $key => $value)
+{
+    $user_id = $value['id'];
+}
+
+$user_object->setUserId($user_id);
+$data = $user_object->get_user_data_by_id();
+
+$user_name = $data['user_name'];
+$user_profile = $data['user_profile'];
+
 ?>
 
 <!DOCTYPE html>
@@ -109,26 +124,15 @@ require_once ("database/chatUser.php");
 
             </div>
             <div class="col-lg-4">
-                <?php
+                <input type="hidden" name="login_user_id" id="login_user_id" value="<?php echo $user_id; ?>"/>
+                <p style="display: none" id="testText">testText</p>
+                <div class="mt-3 mb-3 text-center">
+                    <img src="<?php echo $user_profile;?>" width="150" class="img-fluid rounded-circle img-thumbnail"/>
+                    <h3 class="mt-2"><?php echo $user_name;?></h3>
+                    <a href="profile.php" class="btn btn-secondary mt-2 mb-2">Edit</a>
 
-                $login_user_id = '';
-
-                foreach($_SESSION['user_data'] as $key => $value)
-                {
-                    $login_user_id = $value['id'];
-                    ?>
-                    <input type="hidden" name="login_user_id" id="login_user_id" value="<?php echo $login_user_id; ?>"/>
-                    <p style="display: none" id="testText">testText</p>
-                    <div class="mt-3 mb-3 text-center">
-                        <img src="<?php echo $value['profile'];?>" width="150" class="img-fluid rounded-circle img-thumbnail"/>
-                        <h3 class="mt-2"><?php echo $value['name'];?></h3>
-                        <a href="profile.php" class="btn btn-secondary mt-2 mb-2">Edit</a>
-
-                        <input type="button" class="btn btn-primary mt-2 mb-2" name="logout" id="logout" value="Logout"/>
-                    </div>
-                    <?php
-                }
-                ?>
+                    <input type="button" class="btn btn-primary mt-2 mb-2" name="logout" id="logout" value="Logout"/>
+                </div>
             </div>
         </div>
     </div>
