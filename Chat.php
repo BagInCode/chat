@@ -38,6 +38,15 @@ class Chat implements MessageComponentInterface {
 
         $message_object->saveMessage();
 
+        $msgID = $message_object->getMessageId();
+        if($msgID === false)
+        {
+            $data['message_id'] = "false";
+        }else
+        {
+            $data['message_id'] = $msgID['id'];
+        }
+
         $user_object->setUserId($data['userId']);
         $user_data = $user_object->get_user_data_by_id();
 

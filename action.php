@@ -44,6 +44,20 @@ if(isset($_POST['action']))
         }
 
         echo json_encode(['status' => 1, 'result' => $result]);
+    }else if($_POST['action'] == 'delete')
+    {
+        require ("database/_Message.php");
+
+        $message_object = new _Message();
+        $message_object->setId($_POST['id']);
+
+        if($message_object->deleteMessage())
+        {
+            echo json_encode(['status' => 1]);
+        }else
+        {
+            echo json_encode(['status' => 0]);
+        }
     }
 }
 

@@ -138,4 +138,96 @@ class _Message
 
         return $result;
     }
+
+    function editMessage()
+    {
+        $text = $this->getText();
+        $id = $this->getId();
+
+        $query = "UPDATE message_table
+        SET text = :text
+        WHERE id = :id";
+
+        $statement = $this->connect->prepare($query);
+        $statement->bindParam(':text', $text);
+        $statement->bindParam(':id', $id);
+
+        try
+        {
+           if($statement->execute())
+           {
+               return true;
+           }else
+           {
+               return false;
+           }
+        }catch(Exception $error)
+        {
+            $error->getMessage();
+        }
+
+        return false;
+    }
+
+    function getMessageId()
+    {
+        $created_on = $this->getCreatedOn();
+        $text = $this->getText();
+        $chat_id = $this->getChatId();
+        $user_id = $this->getUserId();
+
+        $query = "SELECT id 
+                    FROM message_table 
+                    WHERE message_table.text = :text AND 
+                          message_table.created_on = :created_on AND 
+                          message_table.user_id = :user_id AND 
+                          message_table.chat_id = :chat_id;";
+
+        $statement = $this->connect->prepare($query);
+        $statement->bindParam(':text', $text);
+        $statement->bindParam(':created_on', $created_on);
+        $statement->bindParam(':user_id', $user_id);
+        $statement->bindParam(':chat_id', $chat_id);
+
+        try
+        {
+            if($statement->execute())
+            {
+                $data = $statement->fetch(PDO::FETCH_ASSOC);
+
+                return $data;
+            }
+        }catch(Exception $error)
+        {
+            $error->getMessage();
+        }
+
+        return false;
+    }
+
+    function deleteMessage()
+    {
+        $id = $this->getId();
+
+        $query = "DELETE FROM message_table WHERE message_table.id=:id";
+
+        $statement = $this->connect->prepare($query);
+        $statement->bindParam(':id', $id);
+
+        try
+        {
+            if($statement->execute())
+            {
+                return true;
+            }else
+            {
+                return false;
+            }
+        }catch (Exception $error)
+        {
+            $error->getMessage();
+        }
+
+        return false;
+    }
 }
