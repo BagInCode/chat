@@ -97,4 +97,45 @@ class _Message
 
         return $result;
     }
+
+    function loadMessage()
+    {
+        $last_message_id = $this->getId();
+        $count_message = 10;
+        $chat_id = $this->getChatId();
+
+        $query = "SELECT * 
+                    FROM message_table 
+                    WHERE message_table.chat_id=:chat_id 
+                    ORDER BY message_table.id DESC
+					LIMIT ".$last_message_id.", ".$count_message.";";
+
+        $statement = $this->connect->prepare($query);
+        $statement->bindParam(':chat_id', $chat_id);
+
+        $result = array();
+
+        try
+        {
+            if($statement->execute())
+            {
+                $result[0]['rowCount'] = $statement->rowCount();
+
+                for($i = 0; $i < $statement->rowCount(); $i++)
+                {
+                    $data = $statement->fetch(PDO::FETCH_ASSOC);
+
+                    $result[$i+1]['id'] = $data['id'];
+                    $result[$i+1]['user_id'] = $data['user_id'];
+                    $result[$i+1]['created_on'] = $data['created_on'];
+                    $result[$i+1]['text'] = $data['text'];
+                }
+            }
+        }catch(Exception $error)
+        {
+            die($error->getMessage());
+        }
+
+        return $result;
+    }
 }

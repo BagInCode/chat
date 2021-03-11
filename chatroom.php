@@ -30,7 +30,7 @@ $chatList_object->setChatId($chat_id);
 
 $chat_name = $chatList_object->getNameById();
 
-require_once ("database/chatUser.php");
+require ("database/chatUser.php");
 
 $user_object = new ChatUser();
 
@@ -115,7 +115,7 @@ $user_profile = $data['user_profile'];
         <br/>
         <div class="row">
             <div class="col-lg-8">
-                <div class="card">
+                <div class="card" id="try_scroll_here">
                     <div class="card-header">
                         <a href="chatlist.php" class="btn btn-primary mt-2 mb-2">Back</a>
                         <?php
@@ -125,6 +125,59 @@ $user_profile = $data['user_profile'];
                     </div>
                     <div class="card-body" id="message_area">
 
+                        <?php
+                            require ("database/_Message.php");
+
+                            $message_object = new _Message();
+
+                            $message_object->setId(0);
+                            $message_object->setChatId($chat_id);
+                            $result = $message_object->loadMessage();
+
+                            $html_data = "";
+
+                            for($i = 1; $i <= $result[0]['rowCount']; $i++)
+                            {
+                                $from = "";
+                                $background = "";
+                                $row = "";
+
+                                if($result[$i]['user_id'] == $user_id)
+                                {
+                                    $from = "Me";
+                                    $row = "row justify-content-start";
+                                    $background = 'text-dark alert-light';
+                                }else
+                                {
+                                    $user_object = new ChatUser;
+                                    $user_object->setUserId($result[$i]['user_id']);
+
+                                    $data = $user_object->get_user_data_by_id();
+
+                                    $from = $data['user_name'];
+                                    $row = 'row justify-content-end';
+                                    $background = 'alert-success';
+                                }
+
+                                $html_data = "<div class='".$row."'>
+                                                <div class='col-sm-10'>
+                                                    <div class='shadow-sm alert ".$background."'>
+                                                        <b>".$from." - </b>".$result[$i]['text']."<br/>
+                                                        <div class='text-right'>
+                                                            <small>
+                                                                 <i>".$result[$i]['created_on']."</i>
+                                                            </small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>".$html_data;
+                            }
+
+                            echo $html_data;
+
+                        ?>
+                        <input type="hidden" name="count_message" id="count_message" value="<?php echo $result[0]['rowCount'] ?>">
+                        <input type="hidden" name="load_more" id="load_more" value="<?php if($result[0]['rowCount'] < 10){echo 0;}else{echo 1;}?>"/>
                     </div>
                 </div>
 
@@ -158,10 +211,13 @@ $user_profile = $data['user_profile'];
 <script>
     $(document).ready(function()
     {
+        var scrollLoadDelt = document.getElementById('message_area').scrollHeight / parseInt($('#count_message').val(), 10);
+        document.getElementById('message_area').scrollTop = document.getElementById('message_area').scrollHeight;
         var conn = new WebSocket('ws://localhost:8080');
         conn.onopen = function(e) {
             console.log("Connection established!");
         };
+
 
         conn.onmessage = function(e) {
             console.log(e.data);
@@ -182,6 +238,15 @@ $user_profile = $data['user_profile'];
                 background_class = 'alert-success';
             }
 
+            var scrollDown = false;
+
+            if(document.getElementById('message_area').scrollTop >=
+                document.getElementById('message_area').scrollHeight -
+                document.getElementById('message_area').clientHeight - 10)
+            {
+                scrollDown = true;
+            }
+
             var html_data = "<div class='"+row_class+"'>"+
                                 "<div class='col-sm-10'>"+
                                     "<div class='shadow-sm alert "+background_class+"'>"+
@@ -197,7 +262,92 @@ $user_profile = $data['user_profile'];
 
             $('#message_area').append(html_data);
             $('#chat_message').val('');
+
+            if(scrollDown)
+            {
+                document.getElementById('message_area').scrollTop = document.getElementById('message_area').scrollHeight;
+            }
+
+            var cnt_msg = parseInt($('#count_message').val(), 10);
+            cnt_msg += 1;
+            document.getElementById('count_message').setAttribute('value', cnt_msg.toString());
         };
+
+        $('#message_area').scroll(function()
+        {
+            if(document.getElementById('message_area').scrollTop == 0 &&
+                $('#load_more').val() == '1')
+            {
+                var cnt_msg = parseInt($('#count_message').val(), 10);
+                var chat_id = $('#chat_id').val();
+
+                $.ajax({
+                    url:"action.php",
+                    method: "POST",
+                    data: {
+                        chat_id: chat_id,
+                        cnt_msg: cnt_msg,
+                        action: "load"
+                    },
+                    success:function(data)
+                    {
+                        var response = JSON.parse(data);
+
+                        if(response.status == 1)
+                        {
+                            var html_data = document.getElementById('message_area').innerHTML;
+
+                            var user_id = $('#login_user_id').val();
+
+                            for(let i = 1; i <= response.result[0]['rowCount']; i++)
+                            {
+                                row_class = "";
+                                background_claa = "";
+                                from = "";
+
+                                if(response.result[i]['user_id'] == user_id)
+                                {
+                                    from = "Me";
+                                    row_class = "row justify-content-start";
+                                    background_class = 'text-dark alert-light';
+                                }else
+                                {
+                                    from = response.result[i]['user_name'];
+                                    row_class = 'row justify-content-end';
+                                    background_class = 'alert-success';
+                                }
+
+                                var html_add = "<div class='"+row_class+"'>"+
+                                    "<div class='col-sm-10'>"+
+                                    "<div class='shadow-sm alert "+background_class+"'>"+
+                                    "<b>"+from+" - </b>"+response.result[i]['text']+"<br/>"+
+                                    "<div class='text-right'>"+
+                                    "<small>"+
+                                    "<i>"+response.result[i]['created_on']+"</i>"+
+                                    "</small>"+
+                                    "</div>"+
+                                    "</div>"+
+                                    "</div>"+
+                                    "</div>";
+
+                                html_data = html_add + html_data;
+                            }
+
+                            cnt_msg += response.result[0]['rowCount'];
+
+                            if(response.result[0]['rowCount'] < 10)
+                            {
+                                document.getElementById('load_more').setAttribute('value', '0');
+                            }
+
+                            document.getElementById('message_area').innerHTML = html_data;
+                            document.getElementById('message_area').scrollTop = scrollLoadDelt * response.result[0]['rowCount'];
+                            document.getElementById('count_message').setAttribute('value', cnt_msg.toString());
+                        }
+                    }
+                })
+            }
+        })
 
         $('#chat_form').parsley();
 

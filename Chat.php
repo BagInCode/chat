@@ -42,7 +42,7 @@ class Chat implements MessageComponentInterface {
         $user_data = $user_object->get_user_data_by_id();
 
         $user_name = $user_data['user_name'];
-        $data['dt'] = date("d-m-Y h:i:s");
+        $data['dt'] = date("Y-m-d h:i:s");
 
         foreach ($this->clients as $client) {
             /*if ($from !== $client) {
