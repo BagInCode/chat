@@ -163,7 +163,7 @@ $user_profile = $data['user_profile'];
                                 $html_add = "<div class='".$row."' id='block_message_".$msgID."'>
                                                 <div class='col-sm-10'>
                                                     <div class='shadow-sm alert ".$background."' id='message_".$msgID."'>
-                                                        <b>".$from." - </b>".$result[$i]['text']."<br/>
+                                                        <b>".$from." - </b><span id='message_text_".$msgID."'>".$result[$i]['text']."</span><br/>
                                                         <div class='text-right'>
                                                             <small>
                                                                  <i>".$result[$i]['created_on']."</i>
@@ -199,6 +199,7 @@ $user_profile = $data['user_profile'];
                         <div class="input-group-append">
                             <button type="submit" name="send" id="send" class="btn btn-primary">Send</button>
                         </div>
+                        <input type="hidden" name="id_for_edit" id="id_for_edit" value="0">
                     </div>
                     <div id="validation_error">
 
@@ -236,62 +237,70 @@ $user_profile = $data['user_profile'];
 
             var data = JSON.parse(e.data);
 
-            var row_class = '';
-
-            var background_class = '';
-
-            if(data.from == 'Me')
+            if(data.status == 1)
             {
-                row_class = "row justify-content-start";
-                background_class = 'text-dark alert-light';
-            }else
+                data = data.data;
+
+                var row_class = '';
+
+                var background_class = '';
+
+                if(data.from == 'Me')
+                {
+                    row_class = "row justify-content-start";
+                    background_class = 'text-dark alert-light';
+                }else
+                {
+                    row_class = 'row justify-content-end';
+                    background_class = 'alert-success';
+                }
+
+                var scrollDown = false;
+
+                if(document.getElementById('message_area').scrollTop >=
+                    document.getElementById('message_area').scrollHeight -
+                    document.getElementById('message_area').clientHeight - 10)
+                {
+                    scrollDown = true;
+                }
+
+                var html_data = "<div class='"+row_class+"' id='block_message_"+data.message_id+"'>"+
+                    "<div class='col-sm-10'>"+
+                    "<div class='shadow-sm alert "+background_class+"' id='message_"+data.message_id+"'>"+
+                    "<b>"+data.from+" - </b><span id='message_text_"+data.message_id+"'>"+data.msg+"</span><br/>"+
+                    "<div class='text-right'>"+
+                    "<small>"+
+                    "<i>"+data.dt+"</i>"+
+                    "</small>"+
+                    "</div>";
+
+                if(data.from == 'Me')
+                {
+                    html_data += "<input type='button' class='btn btn-secondary' name='edit_message_"+data.message_id+"' id='edit_message_"+data.message_id+"' onclick='editMessage(this.id)' value='Edit'>"+
+                        "<input type='button' class='btn btn-secondary' name='delete_message_"+data.message_id+"' id='delete_message_"+data.message_id+"' onclick='deleteMessage(this.id)' value='Delete'>";
+                }
+
+                html_data += "</div>"+
+                    "</div>"+
+                    "</div>";
+
+                $('#message_area').append(html_data);
+                $('#chat_message').val('');
+
+                if(scrollDown)
+                {
+                    document.getElementById('message_area').scrollTop = document.getElementById('message_area').scrollHeight;
+                }
+
+                if(data.cntMsgDelt > 0)
+                {
+                    var cnt_msg = parseInt($('#count_message').val(), 10);
+                    cnt_msg += $data.cntMsgDelt;
+                    document.getElementById('count_message').setAttribute('value', cnt_msg.toString());
+                }
+            }else if(data.status == 0)
             {
-                row_class = 'row justify-content-end';
-                background_class = 'alert-success';
-            }
-
-            var scrollDown = false;
-
-            if(document.getElementById('message_area').scrollTop >=
-                document.getElementById('message_area').scrollHeight -
-                document.getElementById('message_area').clientHeight - 10)
-            {
-                scrollDown = true;
-            }
-
-            var html_data = "<div class='"+row_class+"' id='block_message_"+data.message_id+"'>"+
-                                "<div class='col-sm-10'>"+
-                                    "<div class='shadow-sm alert "+background_class+"' id='message_"+data.message_id+"'>"+
-                                        "<b>"+data.from+" - </b>"+data.msg+"<br/>"+
-                                        "<div class='text-right'>"+
-                                            "<small>"+
-                                                "<i>"+data.dt+"</i>"+
-                                            "</small>"+
-                                        "</div>";
-
-            if(data.from == 'Me')
-            {
-                html_data += "<input type='button' class='btn btn-secondary' name='edit_message_"+data.message_id+"' id='edit_message_"+data.message_id+"' onclick='editMessage(this.id)' value='Edit'>"+
-                             "<input type='button' class='btn btn-secondary' name='delete_message_"+data.message_id+"' id='delete_message_"+data.message_id+"' onclick='deleteMessage(this.id)' value='Delete'>";
-            }
-
-            html_data += "</div>"+
-                         "</div>"+
-                         "</div>";
-
-            $('#message_area').append(html_data);
-            $('#chat_message').val('');
-
-            if(scrollDown)
-            {
-                document.getElementById('message_area').scrollTop = document.getElementById('message_area').scrollHeight;
-            }
-
-            if(data.cntMsgDelt > 0)
-            {
-                var cnt_msg = parseInt($('#count_message').val(), 10);
-                cnt_msg += $data.cntMsgDelt;
-                document.getElementById('count_message').setAttribute('value', cnt_msg.toString());
+                document.getElementById("message_text_"+data.data['message_id']).innerText = data.data['msg'];
             }
         };
 
@@ -347,7 +356,7 @@ $user_profile = $data['user_profile'];
                                 var html_add = "<div class='"+row_class+"' id='block_message_"+message_id+"'>"+
                                     "<div class='col-sm-10'>"+
                                     "<div class='shadow-sm alert "+background_class+"' id='message_"+message_id+"'>"+
-                                    "<b>"+from+" - </b>"+msg+"<br/>"+
+                                    "<b>"+from+" - </b><span id='message_text_"+message_id+"'>"+msg+"</span><br/>"+
                                     "<div class='text-right'>"+
                                     "<small>"+
                                     "<i>"+dt+"</i>"+
@@ -394,13 +403,16 @@ $user_profile = $data['user_profile'];
 
             if($('#chat_form').parsley().isValid())
             {
+                var message_id = $('#id_for_edit').val();
+                document.getElementById('id_for_edit').value = '0';
+
                 var user_id = $('#login_user_id').val();
 
                 var message = $('#chat_message').val();
 
                 var chat_id = $('#chat_id').val();
 
-                var data = { userId : user_id, msg : message, chatId : chat_id };
+                var data = { userId : user_id, msg : message, chatId : chat_id, message_id: message_id };
 
                 conn.send(JSON.stringify(data));
             }
@@ -431,13 +443,22 @@ $user_profile = $data['user_profile'];
 
     function editMessage(id)
     {
-        alert("edit message id: "+id);
+        var ID = "";
+        var i;
+
+        for(i = 13; i < (id.length); i++)
+        {
+            ID = ID+id[i];
+        }
+
+        document.getElementById("id_for_edit").setAttribute('value', ID);
+        document.getElementById("chat_message").value = document.getElementById('message_text_'+ID).innerText;
     }
 
     function deleteMessage(id)
     {
         var ID = '';
-        var i
+        var i;
 
         for(i = 15; i < (id.length); i++)
         {

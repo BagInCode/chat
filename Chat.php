@@ -28,46 +28,97 @@ class Chat implements MessageComponentInterface {
 
         $data = json_decode($msg, true);
 
-        $user_object = new \ChatUser();
-        $message_object = new \_Message();
-
-        $message_object->setUserId($data['userId']);
-        $message_object->setChatId($data['chatId']);
-        $message_object->setText($data['msg']);
-        $message_object->setCreatedOn(date("Y-m-d h:i:s"));
-
-        $message_object->saveMessage();
-
-        $msgID = $message_object->getMessageId();
-        if($msgID === false)
+        if($data['message_id'] == 0)
         {
-            $data['message_id'] = "false";
-        }else
-        {
-            $data['message_id'] = $msgID['id'];
-        }
+            $user_object = new \ChatUser();
+            $message_object = new \_Message();
 
-        $user_object->setUserId($data['userId']);
-        $user_data = $user_object->get_user_data_by_id();
+            $message_object->setUserId($data['userId']);
+            $message_object->setChatId($data['chatId']);
+            $message_object->setText($data['msg']);
+            $message_object->setCreatedOn(date("Y-m-d h:i:s"));
 
-        $user_name = $user_data['user_name'];
-        $data['dt'] = date("Y-m-d h:i:s");
+            $message_object->saveMessage();
 
-        foreach ($this->clients as $client) {
-            /*if ($from !== $client) {
-                // The sender is not the receiver, send to each client connected
-                $client->send($msg);
-            }*/
-
-            if($from == $client)
+            $msgID = $message_object->getMessageId();
+            if($msgID === false)
             {
-                $data['from'] = 'Me';
+                $data['message_id'] = "false";
             }else
             {
-                $data['from'] = $user_name;
+                $data['message_id'] = $msgID['id'];
             }
 
-            $client->send(json_encode($data));
+            $user_object->setUserId($data['userId']);
+            $user_data = $user_object->get_user_data_by_id();
+
+            $user_name = $user_data['user_name'];
+            $data['dt'] = date("Y-m-d h:i:s");
+
+            foreach ($this->clients as $client) {
+                /*if ($from !== $client) {
+                    // The sender is not the receiver, send to each client connected
+                    $client->send($msg);
+                }*/
+
+                if($from == $client)
+                {
+                    $data['from'] = 'Me';
+                }else
+                {
+                    $data['from'] = $user_name;
+                }
+
+                $client->send(json_encode(['status' => 1, 'data' => $data]));
+            }
+        }else
+        {
+            $message_object = new \_Message();
+            $message_object->setId($data['message_id']);
+            $message_object->setText($data['msg']);
+
+            $user_object = new \ChatUser();
+            $user_object->setUserId($data['userId']);
+            $user_data = $user_object->get_user_data_by_id();
+            $user_name = $user_data['user_name'];
+
+            if($message_object->editMessage())
+            {
+                foreach ($this->clients as $client) {
+                    /*if ($from !== $client) {
+                        // The sender is not the receiver, send to each client connected
+                        $client->send($msg);
+                    }*/
+
+                    if($from == $client)
+                    {
+                        $data['from'] = 'Me';
+                    }else
+                    {
+                        $data['from'] = $user_name;
+                    }
+
+                    $client->send(json_encode(['status' => 0, 'data' => $data]));
+                }
+            }else
+            {
+                foreach ($this->clients as $client) {
+                    /*if ($from !== $client) {
+                        // The sender is not the receiver, send to each client connected
+                        $client->send($msg);
+                    }*/
+
+                    if($from == $client)
+                    {
+                        $data['from'] = 'Me';
+                    }else
+                    {
+                        $data['from'] = $user_name;
+                    }
+
+                    $client->send(json_encode(['status' => 2, 'data' => $data]));
+                }
+            }
         }
     }
 
