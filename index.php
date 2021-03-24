@@ -1,58 +1,11 @@
 <?php
 
-
-$error = '';
-
 session_start();
 
 if(isset($_SESSION['user_data']))
 {
-    header('location:chatroom.php');
+    header('location:chatlist.php');
 }
-
-if(isset($_POST['login']))
-{
-    require_once ('database/chatUser.php');
-
-    $user_object = new ChatUser;
-
-    $user_object->setUserEmail($_POST['user_email']);
-
-    $user_data = $user_object->get_user_data_by_email();
-
-    if(is_array($user_data) && count($user_data) > 0)
-    {
-        if($user_data['user_status'] == 'Enable')
-        {
-            if($user_data['user_password'] == $user_object->hash_password($_POST['user_password']))
-            {
-                $user_object->setUserId($user_data['user_id']);
-                $user_object->setUserLoginStatus('Login');
-
-                if($user_object->update_user_login_data())
-                {
-                    $_SESSION['user_data'][$user_data['user_id']] = [
-                            'id' => $user_data['user_id'],
-                            'name' => $user_data['user_name'],
-                            'profile' => $user_data['user_profile']
-                    ];
-
-                    header('location:chatlist.php');
-                }
-            }else
-            {
-                $error = "Wrong Password";
-            }
-        }else
-        {
-            $error = "Verify your Email";
-        }
-    }else
-    {
-        $error = "Wrong Email Address";
-    }
-}
-
 ?>
 
 
@@ -91,27 +44,19 @@ if(isset($_POST['login']))
 
     <div class="row justify-content-md-center">
         <div class="col-md-4">
-            <?php
-                if(isset($_SESSION['success_message']))
-                {
-                    echo '
-                    <div class="alert alert-success">
-                    '.$_SESSION['success_message'].'
-                    </div>
-                    ';
-
-                    unset($_SESSION['success_message']);
-                }
-
-                if($error != '')
-                {
-                    echo '
-                    <div class="alert alert-danger">
-                    '.$error.'
-                    </div>
-                    ';
-                }
-            ?>
+            <div style="display: none" id="error_message_box">
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <div id="error_message"></div>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        </div>
+        <div style="display: none" id="success_message_box">
+            <div class="alert alert-success">
+                <div id="success_message"></div>
+            </div>
+        </div>
             <div class="card">
                 <div class="card-header">Login</div>
                 <div class="card-body">
@@ -127,7 +72,7 @@ if(isset($_POST['login']))
                         </div>
 
                         <div class="form-group text-center">
-                            <input type="submit" name="login" id="login" class="btn btn-primaty" value="Login"/>
+                            <input type="submit" name="login" id="login" class="btn btn-primary" value="Login"/>
                         </div>
                     </form>
                 </div>
@@ -141,6 +86,44 @@ if(isset($_POST['login']))
     $(document).ready(function()
     {
         $('#login_form').parsley();
+
+        $('#login_form').on('submit', function(event)
+        {
+            event.preventDefault();
+
+            if($('#login_form').parsley().isValid())
+            {
+                var user_email = $('#user_email').val();
+                var user_password = $('#user_password').val();
+                var session_id = '<?php echo session_id(); ?>';
+
+                $.ajax({
+                    url: "ChatUserController.php",
+                    method: "GET",
+                    data: {
+                        user_email: user_email,
+                        user_password: user_password,
+                        session_id: session_id,
+                        action: "login"
+                    },
+                    success: function(data)
+                    {
+                        var response = JSON.parse(data);
+
+                        if(response.status == 1)
+                        {
+                            window.location.href = "http://localhost:63342/Chat/chatlist.php";
+                        }else
+                        {
+                            $('#error_message_box').show();
+                            $('#error_message').append(response.error_message);
+                        }
+                    }
+                })
+            }
+
+            return false;
+        })
     });
 
 </script>

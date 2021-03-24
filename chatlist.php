@@ -7,6 +7,7 @@ if(!isset($_SESSION['user_data']))
     header('location:index.php');
 }
 
+
 require_once ("database/chatUser.php");
 
 $user_object = new ChatUser();
@@ -17,12 +18,6 @@ foreach($_SESSION['user_data'] as $key => $value)
 {
     $user_id = $value['id'];
 }
-
-$user_object->setUserId($user_id);
-$data = $user_object->get_user_data_by_id();
-
-$user_name = $data['user_name'];
-$user_profile = $data['user_profile'];
 
 ?>
 
@@ -93,42 +88,36 @@ $user_profile = $data['user_profile'];
         <br/>
         <div class="row">
             <div class="col-lg-8">
+                <div style="display: none" id="error_message_box">
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        <div id="error_message"></div>
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                </div>
+                <div style="display: none" id="success_message_box">
+                    <div class="alert alert-success">
+                        <div id="success_message"></div>
+                    </div>
+                </div>
                 <div class="card">
                     <div class="card-header">
                         <a href="addchat.php" class="btn btn-primary mt-2 mb-2">Create New Chat</a>
                         <h3 style="display: inline-block">Chat Room List</h3>
                     </div>
                     <div class="card-body" id="chat_list_area">
-                        <?php
-                            $user_object = new ChatUser;
-                            $user_id = '';
-                            foreach($_SESSION['user_data'] as $key => $value)
-                            {
-                                $user_id = $value['id'];
 
-                                $user_object->setUserId($user_id);
-
-                                $result = $user_object->get_users_chats_by_id();
-
-                                for($i = 1; $i <= $result[0]; $i++)
-                                {
-                                    echo '<div class="text-center">
-                                            <a href="chatroom.php?chat_id='.$result[$i][0].'" class="text-center btn btn-primary mt-2 mb-2"><b>'.$result[$i][1].'</b></a>
-                                          </div>
-                                          </br>';
-                                }
-                            }
-                        ?>
                     </div>
                 </div>
 
             </div>
             <div class="col-lg-4">
-                <input type="hidden" name="login_user_id" id="login_user_id" value="<?php echo $user_id; ?>"/>
+                <input type="hidden" name="login_user_id" id="login_user_id" value=""/>
                 <p style="display: none" id="testText">testText</p>
                 <div class="mt-3 mb-3 text-center">
-                    <img src="<?php echo $user_profile;?>" width="150" class="img-fluid rounded-circle img-thumbnail"/>
-                    <h3 class="mt-2"><?php echo $user_name;?></h3>
+                    <img src="" width="150" class="img-fluid rounded-circle img-thumbnail" id="user_img_here"/>
+                    <h3 class="mt-2" id="user_name_here"></h3>
                     <a href="profile.php" class="btn btn-secondary mt-2 mb-2">Edit</a>
 
                     <input type="button" class="btn btn-primary mt-2 mb-2" name="logout" id="logout" value="Logout"/>
@@ -139,26 +128,81 @@ $user_profile = $data['user_profile'];
 </body>
 
 <script>
-    $('#logout').click(function(){
-
-        user_id = $('#login_user_id').val();
+    $(document).ready(function()
+    {
+        var user_id = '<?php foreach ($_SESSION['user_data'] as $key => $value ) { echo $value['id']; }?>';
 
         $.ajax({
-            url:"action.php",
-            method:"POST",
-            data:{user_id:user_id, action:'leave'},
-            success:function(data)
+            url: "ChatUserController.php",
+            method: "GET",
+            data: {
+                user_id: user_id,
+                action: "load_chats"
+            },
+            success: function(data)
             {
                 var response = JSON.parse(data);
 
                 if(response.status == 1)
                 {
-                    location = 'index.php';
-                    conn.close();
+                    var html_data = "";
+
+                    for(i = 1; i <= response.result[0]; i++)
+                    {
+                        html_data = html_data +
+                                    '<div class="text-center">'+
+                                        '<a href="chatroom.php?chat_id='+response.result[i][0]+'" class="text-center btn btn-primary mt-2 mb-2"><b>'+response.result[i][1]+'</b></a>'+
+                                    '</div>'+
+                                    '</br>';
+                    }
+
+                    $('#chat_list_area').append(html_data);
+                }else
+                {
+                    $('#error_message_box').show();
+                    $('#error_message').append(responce.error_message);
                 }
             }
         })
 
+        $.ajax({
+            url: "ChatUserController.php",
+            method: "GET",
+            data: {
+                user_id: user_id,
+                action: "let me public user data!"
+            },
+            success: function(data)
+            {
+                var response = JSON.parse(data);
+
+                if(response.status == 1)
+                {
+                    $('#user_name_here').append(response.user_name);
+                    document.getElementById('user_img_here').setAttribute('src', response.user_profile);
+                }
+            }
+        })
+
+        $('#logout').click(function ()
+        {
+            $.ajax({
+                url: "ChatUserController.php",
+                method: "POST",
+                data: {user_id: user_id, action: 'leave'},
+                success: function (data) {
+                    console.log("Logout:\n"+data);
+
+                    var response = JSON.parse(data);
+
+                    if (response.status == 1) {
+                        location = 'index.php';
+                        conn.close();
+                    }
+                }
+            })
+
+        })
     });
 </script>
 </html>

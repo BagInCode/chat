@@ -13,57 +13,6 @@ if(!isset($_GET['chat_id']))
 }
 
 $chat_id = $_GET['chat_id'];
-unset($_GET['chat_id']);
-
-require_once ("database/ChatTable.php");
-$chat_table_object = new ChatTable;
-
-$chat_table_object->setChatId($chat_id);
-
-if(!$chat_table_object->existChat())
-{
-    header('location:chatlist.php');
-}
-
-$error = "";
-
-if(isset($_POST['add']))
-{
-    require_once("database/chatUser.php");
-
-    $user_object = new ChatUser;
-
-    $user_object->setUserEmail($_POST['user_email']);
-
-    $user_id = 0;
-
-    if(($user_id = $user_object->getIdByEmail()) !== false)
-    {
-        require_once ("database/ChatToUserTable.php");
-
-        $chat_to_user_object = new ChatToUserTable;
-
-        $chat_to_user_object->setUserId($user_id);
-        $chat_to_user_object->setChatId($chat_id);
-
-        if($chat_to_user_object->checkForSecondaryAdding())
-        {
-            if ($chat_to_user_object->addPerson())
-            {
-                header('location:chatroom.php?chat_id=' . $chat_id);
-            }else
-            {
-                $error = "There is sth wrong...";
-            }
-        }else
-        {
-            $error = "This person already in this chat";
-        }
-    }else
-    {
-        $error = "There is no person with this email in this app...";
-    }
-}
 
 ?>
 <!DOCTYPE html>
@@ -101,27 +50,19 @@ if(isset($_POST['add']))
 
 <div class="row justify-content-md-center">
     <div class="col-md-4">
-        <?php
-        if(isset($_SESSION['success_message']))
-        {
-            echo '
-                    <div class="alert alert-success">
-                    '.$_SESSION['success_message'].'
-                    </div>
-                    ';
-
-            unset($_SESSION['success_message']);
-        }
-
-        if($error != '')
-        {
-            echo '
-                    <div class="alert alert-danger">
-                    '.$error.'
-                    </div>
-                    ';
-        }
-        ?>
+        <div style="display: none" id="error_message_box">
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <div id="error_message"></div>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        </div>
+        <div style="display: none" id="success_message_box">
+            <div class="alert alert-success">
+                <div id="success_message"></div>
+            </div>
+        </div>
         <div class="card">
             <div class="card-header">Add</div>
             <div class="card-body">
@@ -146,7 +87,79 @@ if(isset($_POST['add']))
 
     $(document).ready(function()
     {
+        var chat_id = '<?php echo $chat_id; ?>';
+
+        $.ajax({
+            url: "ChatController.php",
+            method: "GET",
+            data: {
+                chat_id: chat_id,
+                action: "exist?"
+            },
+            success: function(data)
+            {
+                var response = JSON.parse(data);
+
+                if(response.status == 1)
+                {
+
+                }else
+                {
+                    window.location.href = "http://localhost:63342/Chat/chatlist.php";
+                }
+            }
+        })
+
         $('#searching_form').parsley();
+        $('#searching_form').on('submit', function()
+        {
+            var user_email = $('#user_email').val();
+
+            $.ajax({
+                url: "ChatUserController.php",
+                method: "GET",
+                data: {
+                    user_email: user_email,
+                    action: "exist_by_email"
+                },
+                success: function(data)
+                {
+                    var response = JSON.parse(data);
+
+                    if(response.status == 1)
+                    {
+                        $.ajax({
+                            url: "ChatToUserController.php",
+                            method: "POST",
+                            data:{
+                                chat_id: chat_id,
+                                user_id: response.user_id,
+                                action: 'create'
+                            },
+                            success: function(data)
+                            {
+                                let response = JSON.parse(data);
+
+                                if(response.status == 1)
+                                {
+                                    window.location.href = "http://localhost:63342/Chat/chatroom.php?chat_id="+chat_id;
+                                }else
+                                {
+                                    $('#error_message_box').show();
+                                    $('#error_message').append(response.error_message);
+                                }
+                            }
+                        })
+                    }else
+                    {
+                        $('#error_message_box').show();
+                        $('#error_message').append(response.error_message);
+                    }
+                }
+            })
+
+            return false;
+        })
     });
 
 </script>

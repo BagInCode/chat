@@ -195,7 +195,7 @@ class _Message
             {
                 $data = $statement->fetch(PDO::FETCH_ASSOC);
 
-                return $data;
+                return $data['id'];
             }
         }catch(Exception $error)
         {

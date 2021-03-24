@@ -7,46 +7,15 @@ if(!isset($_SESSION['user_data']))
     header('location:index.php');
 }
 
-require_once ('database/ChatUser.php');
-
-$user_object = new ChatUser;
-
 $user_id = '';
+$user_name = '';
+$user_profile = '';
 
 foreach ($_SESSION['user_data'] as $key => $value)
 {
     $user_id = $value['id'];
-}
-
-$user_object->setUserId($user_id);
-
-$user_data = $user_object->get_user_data_by_id();
-
-$message = "";
-
-if(isset($_POST['edit']))
-{
-    $user_profile = $_POST['hidden_user_profile'];
-
-    if($_FILES['user_profile']['name'] != '')
-    {
-        $user_profile = $user_object->upload_image($_FILES['user_profile']);
-        $_SESSION['user_data'][$user_id]['profile'] = $user_profile;
-    }
-
-    $user_object->setUserName($_POST['user_name']);
-    $user_object->setUserEmail($_POST['user_email']);
-    $user_object->setUserPassword($_POST['user_password']);
-    $user_object->setUserProfile($user_profile);
-    $user_object->setUserId($user_id);
-
-    if($user_object->update_data())
-    {
-        $message = '<div class="alert alert-success">Profile Details Updated</div>';
-        $user_data['user_name'] = $user_object->getUserName();
-        $user_data['user_email'] = $user_object->getUserEmail();
-        $user_data['user_profile'] = $user_object->getUserProfile();
-    }
+    $user_name = $value['name'];
+    $user_profile = $value['profile'];
 }
 
 ?>
@@ -83,14 +52,24 @@ if(isset($_POST['edit']))
 <body>
 
     <div class="container">
+        <div style="display: none" id="error_message_box">
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                <div id="error_message"></div>
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+        </div>
+        <div style="display: none" id="success_message_box">
+            <div class="alert alert-success">
+                <div id="success_message"></div>
+            </div>
+        </div>
         <br/>
         <br/>
         <h1 class="text-center">PHP Chat App with WebSockets and MySQL</h1>
         <br/>
         <br/>
-        <?php
-            echo $message;
-        ?>
         <div class="card">
             <div class="card-header">
                 <div class="row">
@@ -104,11 +83,11 @@ if(isset($_POST['edit']))
                 <form method="post" id="profile_form" enctype="multipart/form-data">
                     <div class="form-group">
                         <label>Name</label>
-                        <input type="text" name="user_name" id="user_name" class="form-control" data-parsley-pattern="/^[a-zA-Z\s]+$/" required value="<?php echo $user_data['user_name'];?>"/>
+                        <input type="text" name="user_name" id="user_name" class="form-control" data-parsley-pattern="/^[a-zA-Z\s]+$/" required value="<?php echo $user_name;?>"/>
                     </div>
                     <div class="from-group">
                         <label>Email</label>
-                        <input type="email" name="user_email" id="user_email" class="form-control" data-parsley-type="email" required readonly value="<?php echo $user_data['user_email']?>"/>
+                        <input type="email" name="user_email" id="user_email" class="form-control" data-parsley-type="email" required readonly value=""/>
                     </div>
                     <div class="form-group">
                         <label>Password</label>
@@ -117,8 +96,8 @@ if(isset($_POST['edit']))
                     <div class="form-group">
                         <label>Profile</label><br/>
                         <input type="file" name="user_profile" id="user_profile"/><br/>
-                        <img src="<?php echo $user_data['user_profile']; ?>" class="img-fluid img-thumbnail mt-3" width="100"/>
-                        <input type="hidden" name="hidden_user_profile" value="<?php echo $user_data['user_profile'];?>"/>
+                        <img src="<?php echo $user_profile; ?>" class="img-fluid img-thumbnail mt-3" width="100"/>
+                        <input type="hidden" id="hidden_user_profile" name="hidden_user_profile" value="<?php echo $user_profile;?>"/>
                     </div>
                     <div class="form-group text-center">
                         <input type="submit" name="edit" class="btn btn-primary" value="Edit"/>
@@ -132,7 +111,66 @@ if(isset($_POST['edit']))
 
     $(document).ready(function()
     {
-        $('#login_form').parsley();
+        var user_id = '<?php echo $user_id; ?>';
+
+        $.ajax({
+            url: "ChatUserController.php",
+            method: "GET",
+            data: {
+                user_id: user_id,
+                action: 'getEmailById'
+            },
+            success: function(data)
+            {
+                var response = JSON.parse(data);
+
+                if(response.status == 1)
+                {
+                    $('#user_email').val(response.user_email);
+                }else
+                {
+                    $('#error_message_box').show();
+                    $('#error_message').append(response.error_message);
+                }
+            }
+        })
+
+        $('#profile_form').parsley();
+
+        $('#profile_form').on('submit', function()
+        {
+
+            var temp = false;
+            var formD = new FormData(this);
+            formD.append('action', 'change');
+            formD.append('user_id', user_id);
+
+            $.ajax({
+                url: "ChatUserController.php",
+                method: "POST",
+                data: formD,
+                processData: false,
+                contentType: false,
+                success: function(data)
+                {
+                    var response = JSON.parse(data);
+
+                    if(response.status == 1)
+                    {
+                        temp = true;
+                    }else
+                    {
+                        $('#error_message_box').show();
+                        $('#error_message').append(response.error_message);
+                    }
+                }
+            })
+
+            if(!temp)
+            {
+                return false;
+            }
+        })
     });
 
 </script>

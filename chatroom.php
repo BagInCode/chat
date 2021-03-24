@@ -15,37 +15,12 @@ if(!isset($_GET['chat_id']))
 $chat_id = $_GET['chat_id'];
 unset($_GET['chat_id']);
 
-require ("database/ChatTable.php");
-$chat_table_object = new ChatTable;
-
-$chat_table_object->setChatId($chat_id);
-
-if(!$chat_table_object->existChat())
-{
-    header('location:chatlist.php');
-}
-
-$chatList_object = new ChatTable;
-$chatList_object->setChatId($chat_id);
-
-$chat_name = $chatList_object->getNameById();
-
-require ("database/chatUser.php");
-
-$user_object = new ChatUser();
-
 $user_id = '';
 
 foreach($_SESSION['user_data'] as $key => $value)
 {
     $user_id = $value['id'];
 }
-
-$user_object->setUserId($user_id);
-$data = $user_object->get_user_data_by_id();
-
-$user_name = $data['user_name'];
-$user_profile = $data['user_profile'];
 
 ?>
 <!DOCTYPE html>
@@ -116,80 +91,13 @@ $user_profile = $data['user_profile'];
         <div class="row">
             <div class="col-lg-8">
                 <div class="card" id="try_scroll_here">
-                    <div class="card-header">
+                    <div class="card-header" id="card-header">
                         <a href="chatlist.php" class="btn btn-primary mt-2 mb-2">Back</a>
-                        <?php
-                        echo '<a href="addperson.php?chat_id='.$chat_id.'" class="btn btn-primary mt-2 mb-2">Add Person</a>';
-                        echo '<h3 class="text-right" style="display: inline-block"> '.$chat_name['chat_name'].'</h3>';
-                        ?>
+
                     </div>
                     <div class="card-body" id="message_area">
-
-                        <?php
-                            require ("database/_Message.php");
-
-                            $message_object = new _Message();
-
-                            $message_object->setId(0);
-                            $message_object->setChatId($chat_id);
-                            $result = $message_object->loadMessage();
-
-                            $html_data = "";
-
-                            for($i = 1; $i <= $result[0]['rowCount']; $i++)
-                            {
-                                $from = "";
-                                $background = "";
-                                $row = "";
-                                $msgID = $result[$i]['id'];
-
-                                if($result[$i]['user_id'] == $user_id)
-                                {
-                                    $from = "Me";
-                                    $row = "row justify-content-start";
-                                    $background = 'text-dark alert-light';
-                                }else
-                                {
-                                    $user_object = new ChatUser;
-                                    $user_object->setUserId($result[$i]['user_id']);
-
-                                    $data = $user_object->get_user_data_by_id();
-
-                                    $from = $data['user_name'];
-                                    $row = 'row justify-content-end';
-                                    $background = 'alert-success';
-                                }
-
-                                $html_add = "<div class='".$row."' id='block_message_".$msgID."'>
-                                                <div class='col-sm-10'>
-                                                    <div class='shadow-sm alert ".$background."' id='message_".$msgID."'>
-                                                        <b>".$from." - </b><span id='message_text_".$msgID."'>".$result[$i]['text']."</span><br/>
-                                                        <div class='text-right'>
-                                                            <small>
-                                                                 <i>".$result[$i]['created_on']."</i>
-                                                            </small>
-                                                        </div>";
-
-                                if($from == "Me")
-                                {
-                                    $html_add.="
-                                                    <input type='button' class='btn btn-secondary' name='edit_message_".$msgID."' id='edit_message_".$msgID."' onclick='editMessage(this.id)' value='Edit'>
-                                                    <input type='button' class='btn btn-secondary' name='delete_message_".$msgID."' id='delete_message_".$msgID."' onclick='deleteMessage(this.id)' value='Delete'>";
-                                }
-
-                                $html_add.="
-                                                  </div>
-                                                </div>
-                                               </div>";
-
-                                $html_data = $html_add.$html_data;
-                            }
-
-                            echo $html_data;
-
-                        ?>
-                        <input type="hidden" name="count_message" id="count_message" value="<?php echo $result[0]['rowCount'] ?>">
-                        <input type="hidden" name="load_more" id="load_more" value="<?php if($result[0]['rowCount'] < 10){echo 0;}else{echo 1;}?>"/>
+                        <input type="hidden" name="count_message" id="count_message" value="">
+                        <input type="hidden" name="load_more" id="load_more" value=""/>
                     </div>
                 </div>
 
@@ -211,10 +119,9 @@ $user_profile = $data['user_profile'];
                 <input type="hidden" name="chat_id" id="chat_id" value="<?php echo $chat_id; ?>"/>
                 <p style="display: none" id="testText">testText</p>
                 <div class="mt-3 mb-3 text-center">
-                    <img src="<?php echo $user_profile;?>" width="150" class="img-fluid rounded-circle img-thumbnail"/>
-                    <h3 class="mt-2"><?php echo $user_name;?></h3>
+                    <img src="" width="150" class="img-fluid rounded-circle img-thumbnail" id="user_img_here"/>
+                    <h3 class="mt-2" id="user_name_here"></h3>
                     <a href="profile.php" class="btn btn-secondary mt-2 mb-2">Edit</a>
-
                     <input type="button" class="btn btn-primary mt-2 mb-2" name="logout" id="logout" value="Logout"/>
                 </div>
             </div>
@@ -224,13 +131,189 @@ $user_profile = $data['user_profile'];
 <script>
     $(document).ready(function()
     {
-        var scrollLoadDelt = document.getElementById('message_area').scrollHeight / parseInt($('#count_message').val(), 10);
         document.getElementById('message_area').scrollTop = document.getElementById('message_area').scrollHeight;
         var conn = new WebSocket('ws://localhost:8080');
         conn.onopen = function(e) {
             console.log("Connection established!");
         };
 
+        var user_id = '<?php foreach ($_SESSION['user_data'] as $key => $value ) { echo $value['id']; }?>';
+        var chat_id = '<?php echo $chat_id; ?>';
+        var this_user_name = '';
+
+        $.ajax({
+            url: "ChatController.php",
+            method: "GET",
+            data: {
+                chat_id: chat_id,
+                action: "exist?"
+            },
+            beforeSend: function()
+            {
+                console.log("Before send\nexist?:\nchat_id = "+chat_id);
+            },
+            success: function(data)
+            {
+                console.log("Response\nexist?:"+data);
+                var response = JSON.parse(data);
+
+                if(response.status == 1)
+                {
+
+                }else
+                {
+                    window.location.href = "http://localhost:63342/Chat/chatlist.php";
+                }
+            }
+        })
+
+        $.ajax({
+            url: "ChatUserController.php",
+            method: "GET",
+            data: {
+                user_id: user_id,
+                action: "let me public user data!"
+            },
+            async: false,
+            beforeSend: function ()
+            {
+                console.log('Before send\nlet me public user data!:\nuser_id = '+user_id);
+            },
+            success: function(data)
+            {
+                console.log('Response\nlet me public user data!:\n'+data);
+                var response = JSON.parse(data);
+
+                if(response.status == 1)
+                {
+                    this_user_name = response.user_name;
+                    $('#user_name_here').append(response.user_name);
+                    document.getElementById('user_img_here').setAttribute('src', response.user_profile);
+                }
+            }
+        })
+
+        $.ajax({
+            url: "MessageController.php",
+            method: "GET",
+            data: {
+                chat_id: chat_id,
+                message_id: '0',
+                action: 'load_message'
+            },
+            beforeSend: function()
+            {
+                console.log("Before send\nload_message:\nchat_id = "+chat_id);
+            },
+            success: function(data)
+            {
+                console.log("Response\nload_message:"+data);
+
+                var response = JSON.parse(data);
+
+                if(response.status == 1)
+                {
+                    var html_data = "";
+
+                    for(i = 1; i <= response.result[0]['rowCount']; i++)
+                    {
+                        var from = "";
+                        var background = "";
+                        var row = "";
+                        var msgID = response.result[i]['id'];
+
+                        if(response.result[i]['user_id'] == user_id)
+                        {
+                            from = "Me";
+                            row = "row justify-content-start";
+                            background = 'text-dark alert-light';
+                        }else
+                        {
+                            from = "Unknow...";
+
+                            $.ajax({
+                                url: "ChatUserController.php",
+                                method: "GET",
+                                data:{
+                                    user_id: response.result[i]['user_id'],
+                                    message_id: msgID,
+                                    action: 'let me public user data!'
+                                },
+                                async: false,
+                                success: function(data)
+                                {
+                                    var input = JSON.parse(data);
+
+                                    if(input.status == 1)
+                                    {
+                                        from = input.user_name;
+                                    }
+                                }
+                            })
+
+                            row = 'row justify-content-end';
+                            background = 'alert-success';
+                        }
+
+                        html_add = "<div class='"+row+"' id='block_message_"+msgID+"'>"+
+                                    "<div class='col-sm-10'>"+
+                                    "<div class='shadow-sm alert "+background+"' id='message_"+msgID+"'>"+
+                                    "<b>"+from+"</b> - <span id='message_text_"+msgID+"'>"+response.result[i]['text']+"</span><br/>"+
+                                    "<div class='text-right'>"+
+                                    "<small>"+
+                                    "<i>"+response.result[i]['created_on']+"</i>"+
+                                    "</small>"+
+                                    "</div>";
+
+                    if(from == "Me")
+                    {
+                        html_add += "<input type='button' class='btn btn-secondary' name='edit_message_"+msgID+"' id='edit_message_"+msgID+"' onclick='editMessage(this.id)' value='Edit'>"+
+                                    "<input type='button' class='btn btn-secondary' name='delete_message_"+msgID+"' id='delete_message_"+msgID+"' onclick='deleteMessage(this.id)' value='Delete'>";
+                    }
+
+                        html_add+="</div>"+
+                                "</div>"+
+                                "</div>";
+
+                        html_data = html_add + html_data;
+                    }
+
+                    $('#message_area').append(html_data);
+                    document.getElementById('count_message').setAttribute('value', response.result[0]['rowCount'].toString());
+
+                    if(response.result[0]['rowCount'] < 10)
+                    {
+                        document.getElementById('load_more').setAttribute('value', "0");
+                    }else
+                    {
+                        document.getElementById('load_more').setAttribute('value', "1");
+                    }
+                }
+
+                document.getElementById('message_area').scrollTop = document.getElementById('message_area').scrollHeight;
+            }
+        })
+
+        $.ajax({
+            url: "ChatController.php",
+            method: "GET",
+            data:{
+                chat_id: chat_id,
+                action: "get chat name"
+            },
+            success: function(data)
+            {
+                var response = JSON.parse(data)
+
+                if(response.status == 1)
+                {
+                    var html = '<a href="addperson.php?chat_id='+chat_id+'" class="btn btn-primary mt-2 mb-2">Add Person</a>'+
+                                '<h3 class="text-right" style="display: inline-block"> '+response.chat_name+'</h3>';
+
+                    $('#card-header').append(html);
+                }
+            }
+        })
 
         conn.onmessage = function(e) {
             console.log(e.data);
@@ -267,10 +350,10 @@ $user_profile = $data['user_profile'];
                 var html_data = "<div class='"+row_class+"' id='block_message_"+data.message_id+"'>"+
                     "<div class='col-sm-10'>"+
                     "<div class='shadow-sm alert "+background_class+"' id='message_"+data.message_id+"'>"+
-                    "<b>"+data.from+" - </b><span id='message_text_"+data.message_id+"'>"+data.msg+"</span><br/>"+
+                    "<b>"+data.from+" - </b><span id='message_text_"+data.message_id+"'>"+data.message+"</span><br/>"+
                     "<div class='text-right'>"+
                     "<small>"+
-                    "<i>"+data.dt+"</i>"+
+                    "<i>"+data.created_on+"</i>"+
                     "</small>"+
                     "</div>";
 
@@ -298,9 +381,10 @@ $user_profile = $data['user_profile'];
                     cnt_msg += $data.cntMsgDelt;
                     document.getElementById('count_message').setAttribute('value', cnt_msg.toString());
                 }
-            }else if(data.status == 0)
+            }else if(data.status == 2)
             {
-                document.getElementById("message_text_"+data.data['message_id']).innerText = data.data['msg'];
+                console.log("here");
+                document.getElementById("message_text_"+data.data['message_id']).innerText = data.data['message'];
             }
         };
 
@@ -311,16 +395,16 @@ $user_profile = $data['user_profile'];
             if(document.getElementById('message_area').scrollTop == 0 &&
                 $('#load_more').val() == '1')
             {
+
                 var cnt_msg = parseInt($('#count_message').val(), 10);
-                var chat_id = $('#chat_id').val();
 
                 $.ajax({
-                    url:"action.php",
-                    method: "POST",
+                    url:"MessageController.php",
+                    method: "GET",
                     data: {
                         chat_id: chat_id,
-                        cnt_msg: cnt_msg,
-                        action: "load"
+                        message_id: cnt_msg,
+                        action: 'load_message'
                     },
                     success:function(data)
                     {
@@ -330,16 +414,14 @@ $user_profile = $data['user_profile'];
                         {
                             var html_data = document.getElementById('message_area').innerHTML;
 
-                            var user_id = $('#login_user_id').val();
-
                             for(let i = 1; i <= response.result[0]['rowCount']; i++)
                             {
-                                row_class = "";
-                                background_claa = "";
-                                from = "";
-                                message_id = response.result[i]['id'];
-                                msg = response.result[i]['text'];
-                                dt = response.result[i]['created_on'];
+                                var row_class = "";
+                                var background_class = "";
+                                var from = "";
+                                var message_id = response.result[i]['id'];
+                                var msg = response.result[i]['text'];
+                                var dt = response.result[i]['created_on'];
 
                                 if(response.result[i]['user_id'] == user_id)
                                 {
@@ -348,7 +430,28 @@ $user_profile = $data['user_profile'];
                                     background_class = 'text-dark alert-light';
                                 }else
                                 {
-                                    from = response.result[i]['user_name'];
+                                    from = "Unknow...";
+
+                                    $.ajax({
+                                        url: "ChatUserController.php",
+                                        method: "GET",
+                                        data:{
+                                            user_id: response.result[i]['user_id'],
+                                            action: 'let me public user data!'
+                                        },
+                                        async: false,
+                                        success: function(data)
+                                        {
+                                            console.log(data);
+                                            var input = JSON.parse(data);
+
+                                            if(input.status == 1)
+                                            {
+                                                from = input.user_name;
+                                            }
+                                        }
+                                    })
+
                                     row_class = 'row justify-content-end';
                                     background_class = 'alert-success';
                                 }
@@ -412,33 +515,73 @@ $user_profile = $data['user_profile'];
 
                 var chat_id = $('#chat_id').val();
 
-                var data = { userId : user_id, msg : message, chatId : chat_id, message_id: message_id };
+                var user_name = this_user_name;
 
-                conn.send(JSON.stringify(data));
+                if(message_id == 0)
+                {
+                    var data = {user_id: user_id, message: message, chat_id: chat_id, user_name: user_name, action: "save"};
+
+                    console.log(data);
+
+                    $.ajax({
+                        url: "MessageController.php",
+                        method: "POST",
+                        data: data,
+                        beforeSend: function()
+                        {
+                            console.log("Before save\nsave:\n" + data);
+                        },
+                        success: function(data)
+                        {
+                            console.log("Response\nsave:\n" + data);
+
+                            conn.send(data);
+                        }
+                    })
+                }else
+                {
+                    var data = {message_id: message_id, user_id: user_id, message: message, chat_id: chat_id, user_name: user_name, action: "edit"};
+
+                    console.log(data);
+
+                    $.ajax({
+                        url: "MessageController.php",
+                        method: "POST",
+                        data: data,
+                        beforeSend: function()
+                        {
+                            console.log("Before save\nedit:\n" + data);
+                        },
+                        success: function(data)
+                        {
+                            console.log("Response\nedit:\n" + data);
+
+                            conn.send(data);
+                        }
+                    })
+                }
             }
         })
 
-        $('#logout').click(function(){
-
-            user_id = $('#login_user_id').val();
-
+        $('#logout').click(function ()
+        {
             $.ajax({
-                url:"action.php",
-                method:"POST",
-                data:{user_id:user_id, action:'leave'},
-                success:function(data)
-                {
+                url: "ChatUserController.php",
+                method: "POST",
+                data: {user_id: user_id, action: 'leave'},
+                success: function (data) {
+                    console.log("Logout:\n"+data);
+
                     var response = JSON.parse(data);
 
-                    if(response.status == 1)
-                    {
+                    if (response.status == 1) {
                         location = 'index.php';
                         conn.close();
                     }
                 }
             })
 
-        });
+        })
     });
 
     function editMessage(id)
@@ -468,7 +611,7 @@ $user_profile = $data['user_profile'];
         ID = parseInt(ID, 10);
 
         $.ajax({
-            url: "action.php",
+            url: "MessageController.php",
             method: "POST",
             data: {
                 id: ID,

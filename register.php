@@ -1,60 +1,10 @@
 <?php
-$error = '';
 
-$success_message = '';
+session_start();
 
-if(isset($_POST["register"]))
+if(isset($_SESSION['user_data']))
 {
-    if(isset($_SESSION['user_data']))
-    {
-        header('location:chatroom.php');
-    }
-
-    require_once ('database/chatUser.php');
-
-    $user_object = new ChatUser;
-
-    $user_object->setUserName($_POST['user_name']);
-    $user_object->setUserEmail($_POST['user_email']);
-    $user_object->setUserPassword($_POST['user_password']);
-    $user_object->setUserProfile($user_object->make_avatar(strtoupper($_POST['user_name'][0])));
-    $user_object->setUserStatus('Disabled');
-    $user_object->setUserCreatedOn(date('Y-n-d H:i:s'));
-    $user_object->setUserVerificationCode(md5(uniqid()));
-    $user_data = $user_object->get_user_data_by_email();
-
-    if(is_array($user_data) && count($user_data) > 0)
-    {
-        $error = "This Email Already Register";
-    }else
-    {
-        if($user_object->save_data())
-        {
-            $to = '<'.$user_object->getUserEmail().'>';
-            $subject = 'Registration verification for Chat App Demo';
-            $message = '
-            <p>Thank you for registration for Chat App Demo.</p>
-                <p>This is a verification email, please click the link to verify your email adress.</p>
-                <p><a href="http://localhost:81/tutorial/chat_application/verify.php?code='.$user_object->getUserVerificationCode().'">Click to verify</a></p>
-                <p>Thank you...</p>
-                ';
-            $headers = "Content-type: text/html; charset=windows-1251 \r\n";
-            $headers .= "From: От кого письмо <serg1331@inbox.ru>\r\n";
-
-            if(!mail($to, $subject, $message, $headers))
-            {
-                $error = '<p>Can`t send verefiction mail</p>
-                            <p>But follow <a href="http://localhost:63342/Chat/verify.php?code='.$user_object->getUserVerificationCode().'">link</a> to verify email</p>';
-            }else
-            {
-                $success_message = 'Verification Email sent to '.$user_object->getUserEmail().', so before login verify your email';
-            }
-        }else
-        {
-            $error = "Sth went wrong";
-        }
-    }
-
+    header('location:chatlist.php');
 }
 
 ?>
@@ -86,7 +36,6 @@ if(isset($_POST["register"]))
 
 </head>
 <body>
-
     <div class="container">
         <br/>
         <br/>
@@ -94,30 +43,19 @@ if(isset($_POST["register"]))
 
         <div class="row justify-content-md-center">
             <div class="col col-md-4-mt-5">
-                <?php
-                    if($error != '')
-                    {
-                        echo '
-                        <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                            '.$error.'
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <div style="display: none" id="error_message_box">
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        <div id="error_message"></div>
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                        ';
-                    }
-
-                    if($success_message != "")
-                    {
-                        echo '
-                        <div class="alert alert-success">
-                        '.$success_message.'
-                        </div>
-                        ';
-
-                        header('location:index.php');
-                    }
-                ?>
+                        </button>
+                    </div>
+                </div>
+                <div style="display: none" id="success_message_box">
+                    <div class="alert alert-success">
+                        <div id="success_message"></div>
+                    </div>
+                </div>
                 <div class="card">
                     <div class="card-header">Register</div>
                     <div class="card-body">
@@ -140,7 +78,7 @@ if(isset($_POST["register"]))
                             </div>
 
                             <div class="form-group text-center">
-                                <input type="submit" name="register" class="btn btn-success" value="Register">
+                                <input type="submit" name="register" id="register" class="btn btn-success" value="Register">
                             </div>
 
                         </form>
@@ -154,8 +92,80 @@ if(isset($_POST["register"]))
 <script>
     $(document).ready(function()
     {
-       $('#register_form').parsley();
-    });
+        $('#register_form').parsley();
+
+        $('#register_form').on('submit', function(event)
+        {
+            if($('#register_form').parsley().isValid())
+            {
+                var user_name = $('#user_name').val();
+                var user_email = $('#user_email').val();
+                var user_password = $('#user_password').val();
+
+                $.ajax({
+                    url: "ChatUserController.php",
+                    method: "POST",
+                    data: {
+                        user_name: user_name,
+                        user_email: user_email,
+                        user_password: user_password,
+                        action: "register"
+                    },
+                    success: function(data)
+                    {
+                        var response = JSON.parse(data);
+
+                        if(response.status == 1)
+                        {
+                            $('#success_message_box').show();
+                            $('#success_message').append(response.success_message);
+                        }else
+                        {
+                            $('#error_message_box').show();
+                            $('#error_message').append(response.error_message);
+                        }
+                    }
+                })
+            }
+
+            return false;
+        })
+    })
+
+    function redirect()
+    {
+        var element = document.getElementById('user_verification_code');
+
+        if(typeof(element) != 'undefined' && element != null)
+        {
+            var code = $('#user_verification_code').val();
+
+            $.ajax({
+                url: "ChatUserController.php",
+                method: "POST",
+                data: {
+                    code: code,
+                    action: 'verify'
+                },
+                success: function(data)
+                {
+                    var response = JSON.parse(data);
+
+                    if(response.status == 2)
+                    {
+                        $('#error_message').append(response.error_message);
+                    }else
+                    {
+                        window.location.href = "http://localhost:63342/Chat/index.php";
+                    }
+                }
+            })
+        }else
+        {
+            document.getElementById('error_message').value = "";
+            document.getElementById('error_message_box').display = "none";
+        }
+    }
 </script>
 
 </body>
