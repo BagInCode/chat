@@ -7,11 +7,6 @@ if(!isset($_SESSION['user_data']))
     header('location:index.php');
 }
 
-
-require_once ("database/chatUser.php");
-
-$user_object = new ChatUser();
-
 $user_id = '';
 
 foreach($_SESSION['user_data'] as $key => $value)
@@ -190,8 +185,8 @@ foreach($_SESSION['user_data'] as $key => $value)
                 url: "ChatUserController.php",
                 method: "POST",
                 data: {user_id: user_id, action: 'leave'},
-                success: function (data) {
-                    console.log("Logout:\n"+data);
+                success: function (data)
+                {
 
                     var response = JSON.parse(data);
 

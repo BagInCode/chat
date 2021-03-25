@@ -148,13 +148,8 @@ foreach($_SESSION['user_data'] as $key => $value)
                 chat_id: chat_id,
                 action: "exist?"
             },
-            beforeSend: function()
-            {
-                console.log("Before send\nexist?:\nchat_id = "+chat_id);
-            },
             success: function(data)
             {
-                console.log("Response\nexist?:"+data);
                 var response = JSON.parse(data);
 
                 if(response.status == 1)
@@ -175,13 +170,8 @@ foreach($_SESSION['user_data'] as $key => $value)
                 action: "let me public user data!"
             },
             async: false,
-            beforeSend: function ()
-            {
-                console.log('Before send\nlet me public user data!:\nuser_id = '+user_id);
-            },
             success: function(data)
             {
-                console.log('Response\nlet me public user data!:\n'+data);
                 var response = JSON.parse(data);
 
                 if(response.status == 1)
@@ -201,14 +191,8 @@ foreach($_SESSION['user_data'] as $key => $value)
                 message_id: '0',
                 action: 'load_message'
             },
-            beforeSend: function()
-            {
-                console.log("Before send\nload_message:\nchat_id = "+chat_id);
-            },
             success: function(data)
             {
-                console.log("Response\nload_message:"+data);
-
                 var response = JSON.parse(data);
 
                 if(response.status == 1)
@@ -315,8 +299,8 @@ foreach($_SESSION['user_data'] as $key => $value)
             }
         })
 
-        conn.onmessage = function(e) {
-            console.log(e.data);
+        conn.onmessage = function(e)
+        {
 
             var data = JSON.parse(e.data);
 
@@ -381,9 +365,8 @@ foreach($_SESSION['user_data'] as $key => $value)
                     cnt_msg += $data.cntMsgDelt;
                     document.getElementById('count_message').setAttribute('value', cnt_msg.toString());
                 }
-            }else if(data.status == 2)
+            }else if(data.status == 0)
             {
-                console.log("here");
                 document.getElementById("message_text_"+data.data['message_id']).innerText = data.data['message'];
             }
         };
@@ -442,7 +425,6 @@ foreach($_SESSION['user_data'] as $key => $value)
                                         async: false,
                                         success: function(data)
                                         {
-                                            console.log(data);
                                             var input = JSON.parse(data);
 
                                             if(input.status == 1)
@@ -521,20 +503,12 @@ foreach($_SESSION['user_data'] as $key => $value)
                 {
                     var data = {user_id: user_id, message: message, chat_id: chat_id, user_name: user_name, action: "save"};
 
-                    console.log(data);
-
                     $.ajax({
                         url: "MessageController.php",
                         method: "POST",
                         data: data,
-                        beforeSend: function()
-                        {
-                            console.log("Before save\nsave:\n" + data);
-                        },
                         success: function(data)
                         {
-                            console.log("Response\nsave:\n" + data);
-
                             conn.send(data);
                         }
                     })
@@ -542,20 +516,12 @@ foreach($_SESSION['user_data'] as $key => $value)
                 {
                     var data = {message_id: message_id, user_id: user_id, message: message, chat_id: chat_id, user_name: user_name, action: "edit"};
 
-                    console.log(data);
-
                     $.ajax({
                         url: "MessageController.php",
                         method: "POST",
                         data: data,
-                        beforeSend: function()
-                        {
-                            console.log("Before save\nedit:\n" + data);
-                        },
                         success: function(data)
                         {
-                            console.log("Response\nedit:\n" + data);
-
                             conn.send(data);
                         }
                     })
@@ -570,8 +536,6 @@ foreach($_SESSION['user_data'] as $key => $value)
                 method: "POST",
                 data: {user_id: user_id, action: 'leave'},
                 success: function (data) {
-                    console.log("Logout:\n"+data);
-
                     var response = JSON.parse(data);
 
                     if (response.status == 1) {

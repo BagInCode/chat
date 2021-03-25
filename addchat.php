@@ -103,8 +103,6 @@ if(!isset($_SESSION['user_data']))
                 },
                 success: function(data)
                 {
-                    console.log("first ajax:\n"+data);
-
                     var response = JSON.parse(data);
 
                     if(response.status == 1)
@@ -119,8 +117,6 @@ if(!isset($_SESSION['user_data']))
                             },
                             success: function(data)
                             {
-                                console.log("second ajax:\n"+data);
-
                                 let response = JSON.parse(data);
 
                                 if(response.status == 1)
